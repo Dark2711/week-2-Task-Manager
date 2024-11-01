@@ -11,12 +11,12 @@ const taskSchema = new mongoose.Schema({
   },
   priority: {
     type: String,
-    enum: ['Low', 'Medium', 'High'],
+    enum: ['low', 'medium', 'high'],
     required: true,
   },
   type: {
     type: String,
-    enum: ['Personal', 'Shopping', 'Work', 'Health'],
+    enum: ['personal', 'shopping', 'work', 'health'],
     required: true,
   },
   dueDate: {

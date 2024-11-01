@@ -18,7 +18,7 @@ const createTaskBody = z.object({
   description: z.string(),
   priority: z.string(),
   type: z.string(),
-  dueDate: z.string().date(),
+  dueDate: z.string(),
 });
 
 const createTask = async (req: CreateTaskRequest, res: Response) => {
@@ -69,7 +69,7 @@ const updateTaskBody = z.object({
   description: z.string().optional(),
   priority: z.string().optional(),
   type: z.string().optional(),
-  dueDate: z.string().date().optional(),
+  dueDate: z.string().optional(),
 });
 const updateTask = async (req: UpdateTaskRequest, res: Response) => {
   const { id } = req.params;

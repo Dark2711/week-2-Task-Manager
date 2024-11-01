@@ -58,7 +58,7 @@ const signup = async (req: SignupRequest, res: Response): Promise<void> => {
     return;
   } catch (error) {
     console.log(error);
-    res.send(411).json({
+    res.status(411).json({
       Error: 'Error creating user',
     });
     return;
