@@ -8,7 +8,7 @@ const Task = () => {
       <Header />
       <div className="flex flex-col md:flex-row w-full gap-4 md:gap-6">
         <div className="w-full md:w-1/3 lg:w-1/4">
-          <TaskForm />
+          <TaskForm btnText="Create Task" titleHeading="Create Your Task" />
         </div>
         <div className="w-full md:w-2/3 lg:w-3/4 mt-4 md:mt-0">
           <TaskList />
