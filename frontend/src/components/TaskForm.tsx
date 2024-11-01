@@ -1,10 +1,10 @@
+// TaskForm.tsx
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
 import {
   Select,
   SelectContent,
@@ -12,52 +12,96 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
 import { Textarea } from './ui/textarea';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import axios from 'axios';
+
+const PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+] as const;
+
+const TASK_TYPES = [
+  { value: 'personal', label: 'Personal' },
+  { value: 'work', label: 'Work' },
+  { value: 'shopping', label: 'Shopping' },
+  { value: 'health', label: 'Health' },
+] as const;
+
+type Priority = (typeof PRIORITY_OPTIONS)[number]['value'];
+type TaskType = (typeof TASK_TYPES)[number]['value'];
 
 interface TaskFormProps {
   titleHeading: string;
   btnText: string;
+  onTaskCreated?: (task: Task) => void;
 }
+
 interface Task {
   _id: string;
   title: string;
   description: string;
-  type: string;
-  priority: string;
+  type: TaskType;
+  priority: Priority;
   dueDate: string;
   completed?: boolean;
 }
 
-export function TaskForm({ titleHeading, btnText }: TaskFormProps) {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  // const [error, setError] = useState<string | null>(null);
-  const [title, setTitle] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [priority, setPriority] = useState<string>('low');
-  const [type, setType] = useState<string>('personal');
-  const [dueDate, setDueDate] = useState<Date | undefined>();
+interface FormData {
+  title: string;
+  description: string;
+  priority: Priority;
+  type: TaskType;
+  dueDate: Date | undefined;
+}
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateValue = e.target.value;
-    setDueDate(dateValue ? new Date(dateValue) : undefined); // Convert to Date or set as undefined if empty
-  };
+const INITIAL_FORM_STATE: FormData = {
+  title: '',
+  description: '',
+  priority: 'low',
+  type: 'personal',
+  dueDate: undefined,
+};
 
-  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+export function TaskForm({ titleHeading, btnText, onTaskCreated }: TaskFormProps) {
+  const [formData, setFormData] = useState<FormData>(INITIAL_FORM_STATE);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = useCallback(
+    (field: keyof FormData, value: string | Date | undefined) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    },
+    [],
+  );
+
+  const handleDateChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const dateValue = e.target.value;
+      handleInputChange('dueDate', dateValue ? new Date(dateValue) : undefined);
+    },
+    [handleInputChange],
+  );
+
+  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    try {
-      const token = window.localStorage.getItem('token');
+    if (!formData.title || !formData.description || !formData.dueDate) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
 
-      const response = await axios.post(
-        `http://localhost:3000/api/v1/task`,
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      const response = await axios.post<Task>(
+        'http://localhost:3000/api/v1/task',
         {
-          title,
-          description,
-          priority,
-          type,
-          dueDate,
+          ...formData,
+          dueDate: formData.dueDate.toISOString(),
         },
         {
           headers: {
@@ -65,89 +109,108 @@ export function TaskForm({ titleHeading, btnText }: TaskFormProps) {
           },
         },
       );
-      setTasks([...tasks, response.data]);
-      toast.success('Task Created successfully');
+
+      toast.success('Task created successfully');
+      onTaskCreated?.(response.data);
+      setFormData(INITIAL_FORM_STATE);
     } catch (error) {
-      console.log(error);
+      console.error('Failed to create task:', error);
+      toast.error('Failed to create task. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
   return (
     <>
       <ToastContainer />
-
-      <div className=" flex justify-center">
+      <div className="flex justify-center">
         <Card className="w-[500px] shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-bold">{titleHeading}</CardTitle>
           </CardHeader>
           <CardContent>
-            <form>
-              <div className="grid w-full items-center gap-4">
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="name">Title</Label>
-                  <Input
-                    id="name"
-                    placeholder="Enter title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
+            <form className="grid w-full items-center gap-4" onSubmit={(e) => e.preventDefault()}>
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  placeholder="Enter title"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Enter description"
+                  rows={4}
+                  className="resize-none"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col space-y-3">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select
+                    value={formData.priority}
+                    onValueChange={(value) => handleInputChange('priority', value as Priority)}
+                  >
+                    <SelectTrigger id="priority">
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {PRIORITY_OPTIONS.map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="name">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Enter description"
-                    rows={4}
-                    className="resize-none"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
+
+                <div className="flex flex-col space-y-3">
+                  <Label htmlFor="type">Type</Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value) => handleInputChange('type', value as TaskType)}
+                  >
+                    <SelectTrigger id="type">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {TASK_TYPES.map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col space-y-3">
-                    <Label htmlFor="priority">Priority</Label>
-                    <Select value={priority} onValueChange={setPriority}>
-                      <SelectTrigger id="priority">
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex flex-col space-y-3">
-                    <Label htmlFor="type">Type</Label>
-                    <Select value={type} onValueChange={setType}>
-                      <SelectTrigger id="type">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        <SelectItem value="personal">Personal</SelectItem>
-                        <SelectItem value="work">Work</SelectItem>
-                        <SelectItem value="shopping">Shopping</SelectItem>
-                        <SelectItem value="health">Health</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    required
-                    onChange={handleDateChange} // Use the custom handler for date conversion
-                    value={dueDate ? dueDate.toISOString().split('T')[0] : ''} // Convert Date to string for display
-                  />
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  required
+                  onChange={handleDateChange}
+                  value={formData.dueDate ? formData.dueDate.toISOString().split('T')[0] : ''}
+                  min={new Date().toISOString().split('T')[0]} // Prevent past dates
+                />
               </div>
             </form>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <Button size="lg" className="text-lg" onClick={handleSubmit}>
-              {btnText}
+            <Button size="lg" className="text-lg" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : btnText}
             </Button>
           </CardFooter>
         </Card>
