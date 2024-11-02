@@ -67,9 +67,12 @@ const TaskList = () => {
         return;
       }
 
-      const response = await axios.get('http://localhost:3000/api/v1/task/allTasks', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        'https://week-2-task-manager.onrender.com/api/v1/task/allTasks',
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       const tasksData = Array.isArray(response.data) ? response.data : response.data.tasks || [];
 
@@ -101,7 +104,7 @@ const TaskList = () => {
         }
 
         await axios.patch(
-          `http://localhost:3000/api/v1/task/${taskId}`,
+          `https://week-2-task-manager.onrender.com/api/v1/task/${taskId}`,
           { completed: true },
           { headers: { Authorization: `Bearer ${token}` } },
         );
@@ -127,7 +130,7 @@ const TaskList = () => {
           return;
         }
 
-        await axios.delete(`http://localhost:3000/api/v1/task/${taskId}`, {
+        await axios.delete(`https://week-2-task-manager.onrender.com/api/v1/task/${taskId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -154,9 +157,13 @@ const TaskList = () => {
           return;
         }
 
-        await axios.put(`http://localhost:3000/api/v1/task/${taskId}`, updatedTask, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.put(
+          `https://week-2-task-manager.onrender.com/api/v1/task/${taskId}`,
+          updatedTask,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
 
         fetchTasks(); // Refresh tasks after update
         toast.success('Task updated successfully');

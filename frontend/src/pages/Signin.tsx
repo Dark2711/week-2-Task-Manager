@@ -23,10 +23,13 @@ const Signin = () => {
     try {
       setIsLoading(true);
 
-      const response = await axios.post('http://localhost:3000/api/v1/user/signin', {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        'https://week-2-task-manager.onrender.com/api/v1/user/signin',
+        {
+          email,
+          password,
+        },
+      );
 
       console.log(response.data);
 
