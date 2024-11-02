@@ -49,7 +49,7 @@ interface TaskFormData {
 const TaskList = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<TaskFormData>({});
+  // const [formData, setFormData] = useState<TaskFormData>({});
 
   // const [title, setTitle] = useState<string>('');
   // const [description, setDescription] = useState<string>('');
@@ -183,7 +183,7 @@ const TaskList = () => {
     [],
   );
   // Reset form data
-  const resetFormData = () => setFormData({});
+  // const resetFormData = () => setFormData({});
   if (error) {
     return (
       <Card className="w-full shadow-lg p-4">
