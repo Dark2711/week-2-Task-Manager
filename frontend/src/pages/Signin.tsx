@@ -10,14 +10,17 @@ const Signin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const navigate = useNavigate();
+
   const handleSignin = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ): Promise<void> => {
     e.preventDefault();
+    setError('');
+
     try {
-      // Set loading state to true before the API call
       setIsLoading(true);
 
       const response = await axios.post('http://localhost:3000/api/v1/user/signin', {
@@ -26,13 +29,24 @@ const Signin = () => {
       });
 
       console.log(response.data);
+
       window.localStorage.setItem('token', response.data.token);
+      window.localStorage.setItem('userName', response.data.userName);
+      console.log('token saved to localstorage');
+
       navigate('/task');
     } catch (error) {
-      console.error('Signin failed', error);
-      // Optionally add error handling, like showing an error message to the user
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          setError(error.response.data.message || 'Authentication failed');
+        } else if (error.request) {
+          setError('No response from server. Please check your connection.');
+        } else {
+          setError('An error occurred. Please try again.');
+        }
+        console.error('Signin error:', error);
+      }
     } finally {
-      // Ensure loading state is set to false whether signin succeeds or fails
       setIsLoading(false);
     }
   };
@@ -44,6 +58,13 @@ const Signin = () => {
           <KeyRound className="text-black w-32 h-20" />
         </div>
         <Heading label="Welcome Back" />
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+            {error}
+          </div>
+        )}
+
         <div>
           <InputBox
             label="Email"

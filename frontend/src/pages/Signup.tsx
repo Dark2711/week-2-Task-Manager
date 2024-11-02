@@ -11,6 +11,8 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+
   const navigate = useNavigate();
 
   const handleSignup = async (
@@ -30,9 +32,16 @@ const Signup = () => {
       console.log(response);
       navigate('/signin');
     } catch (error) {
-      // Handle any signup errors
-      console.error('Signup failed', error);
-      // Optionally show an error message to the user
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          setError(error.response.data.message || 'Authentication failed');
+        } else if (error.request) {
+          setError('No response from server. Please check your connection.');
+        } else {
+          setError('An error occurred. Please try again.');
+        }
+        console.error('Signin error:', error);
+      }
     } finally {
       // Ensure loading state is set to false whether signup succeeds or fails
       setIsLoading(false);
@@ -46,6 +55,11 @@ const Signup = () => {
           <UserRound className="text-black w-32 h-20" />
         </div>
         <Heading label="Create an Account" />
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+            {error}
+          </div>
+        )}
         <div>
           <InputBox
             label="Name"
