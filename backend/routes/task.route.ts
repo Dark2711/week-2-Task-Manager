@@ -1,4 +1,4 @@
-import { Router, RequestHandler, Request } from 'express';
+import { Router, RequestHandler } from 'express';
 import authMiddleware from '../middlewares/auth';
 import {
   createTask,

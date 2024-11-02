@@ -24,6 +24,7 @@ const signinBody = z.object({
 
 const signup = async (req: SignupRequest, res: Response): Promise<void> => {
   const body = req.body;
+
   const { success } = signupBody.safeParse(body);
 
   if (!success) {
@@ -46,11 +47,6 @@ const signup = async (req: SignupRequest, res: Response): Promise<void> => {
       email: body.email,
       password: body.password,
     });
-    // if (!process.env.JWT_SECRET) {
-    //   throw new Error('JWT_SECRET is not defined');
-    // }
-    // const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    // console.log(token);
 
     res.status(211).json({
       message: 'User Created',
@@ -102,6 +98,7 @@ const signin = async (req: SigninRequest, res: Response): Promise<void> => {
       res.status(200).json({
         message: 'Sign In Successfully',
         token,
+        userName: user.name,
       });
       return;
     }
@@ -112,4 +109,37 @@ const signin = async (req: SigninRequest, res: Response): Promise<void> => {
   }
 };
 
-export { signup, signin };
+interface VerifyRequest extends Request {
+  headers: {
+    authorization?: string;
+  };
+}
+
+const verify = async (req: VerifyRequest, res: Response): Promise<void> => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    res.status(401).json({
+      message: 'No token provided',
+    });
+    return;
+  }
+
+  try {
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not defined');
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.status(200).json({
+      valid: true,
+      message: 'Token is valid',
+      decoded,
+      token,
+    });
+  } catch (error) {
+    res.status(401).json({
+      message: 'Invalid token',
+    });
+  }
+};
+
+export { signup, signin, verify };
