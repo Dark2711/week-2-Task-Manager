@@ -22,11 +22,14 @@ const ProtectedRoutes = () => {
       }
 
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/user/verify', {
-          headers: {
-            Authorization: `Bearer ${token}`,
+        const response = await axios.get(
+          'https://week-2-task-manager.onrender.com/api/v1/user/verify',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
 
         console.log(response.data);
 
