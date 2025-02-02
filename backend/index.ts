@@ -10,7 +10,9 @@ app.use(cors());
 
 //connect to db
 connectDB();
-
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 app.use('/api/v1', mainRouter);
 
 app.listen(process.env.PORT || 3000, () =>
